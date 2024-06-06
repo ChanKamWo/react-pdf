@@ -1,4 +1,5 @@
 import fromFragments from '../attributedString/fromFragments';
+import charIsAlphabetic from '../utils/isAlphabet';
 
 /**
  * @typedef {import('../types.js').AttributedString} AttributedString
@@ -12,6 +13,29 @@ import fromFragments from '../attributedString/fromFragments';
  * @returns {[string]} same word
  */
 const defaultHyphenationEngine = (word) => [word];
+
+function breakText(word) {
+  const parts = [];
+
+  for (let i = 0; i < word.length; ) {
+    if (charIsAlphabetic(word.charAt(i))) {
+      let alphabeticWordEndIndex = i + 1;
+      while (
+        alphabeticWordEndIndex < word.length &&
+        charIsAlphabetic(word.charAt(alphabeticWordEndIndex))
+      ) {
+        alphabeticWordEndIndex += 1;
+      }
+      parts.push(word.slice(i, alphabeticWordEndIndex));
+      i = alphabeticWordEndIndex;
+    } else {
+      parts.push(word.charAt(i));
+      i += 1;
+    }
+  }
+
+  return parts;
+}
 
 /**
  * Wrap words of attribute string
@@ -36,10 +60,9 @@ const wrapWords = (engines = {}, options = {}) => {
     for (let i = 0; i < attributedString.runs.length; i += 1) {
       let string = '';
       const run = attributedString.runs[i];
-      const words = attributedString.string
-        .slice(run.start, run.end)
-        .split(/([ ]+)/g)
-        .filter(Boolean);
+      const words = breakText(
+        attributedString.string.slice(run.start, run.end),
+      ).filter(Boolean);
 
       for (let j = 0; j < words.length; j += 1) {
         const word = words[j];

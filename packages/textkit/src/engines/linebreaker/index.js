@@ -3,6 +3,7 @@ import linebreak from './linebreak';
 import slice from '../../attributedString/slice';
 import insertGlyph from '../../attributedString/insertGlyph';
 import advanceWidthBetween from '../../attributedString/advanceWidthBetween';
+import charIsAlphabetic from '../../utils/isAlphabet';
 
 /**
  * @typedef {import('../../types.js').AttributedString} AttributedString
@@ -43,7 +44,6 @@ const breakLines = (string, nodes, breaks) => {
       end = prevNode.value.end;
 
       line = slice(start, end, string);
-      line = insertGlyph(line.length, HYPHEN, line);
     } else {
       end = node.value.end;
       line = slice(start, end, string);
@@ -56,7 +56,20 @@ const breakLines = (string, nodes, breaks) => {
   // Last line
   lines.push(slice(start, string.string.length, string));
 
-  return lines;
+  const newLines = lines.reduce((result, line, index) => {
+    let currentLine = line;
+    const nextLine = lines[index + 1];
+    if (
+      nextLine &&
+      charIsAlphabetic(nextLine.string.charAt(0)) &&
+      charIsAlphabetic(line.string.charAt(line.string.length - 1))
+    ) {
+      currentLine = insertGlyph(line.length, HYPHEN, line);
+    }
+    return [...result, currentLine];
+  }, []);
+
+  return newLines;
 };
 
 /**
